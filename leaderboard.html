@@ -1,92 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Standings | IPL 2026</title>
+    <meta charset="UTF-8"><title>IPL Standings</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron&family=Inter:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body { background: #0f172a; color: white; font-family: 'Inter'; }
-        .rank-gold { color: #ffd700; }
-        .lb-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="p-6 md:p-12">
-    <div class="max-w-3xl mx-auto">
-        <div class="flex justify-between items-center mb-12">
-            <a href="index.html" class="text-gray-500 hover:text-white transition">← BACK</a>
-            <h1 class="font-['Orbitron'] text-2xl text-cyan-400">WORLD STANDINGS</h1>
+<body class="bg-slate-50 p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-10">
+            <div class="flex items-center gap-4"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" class="h-12"><h1 class="text-3xl font-black italic text-[#000080]">STANDINGS</h1></div>
+            <a href="index.html" class="bg-white border px-6 py-2 rounded-2xl text-xs font-black text-[#000080]">← BACK</a>
         </div>
-
-        <div class="lb-card overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border">
             <table class="w-full text-left">
-                <thead class="bg-white/5 text-[10px] uppercase tracking-widest text-gray-500">
-                    <tr>
-                        <th class="p-6">Position</th>
-                        <th class="p-6">Challenger</th>
-                        <th class="p-6 text-right">Points</th>
-                    </tr>
+                <thead class="bg-slate-50 text-[10px] uppercase text-slate-400 font-bold">
+                    <tr><th class="p-6">Rank</th><th class="p-6">Player</th><th class="p-6">Form (Last 5)</th><th class="p-6 text-right">Points</th></tr>
                 </thead>
-                <tbody id="lb-body">
-                    <tr><td colspan="3" class="p-10 text-center animate-pulse">Calculating scores...</td></tr>
-                </tbody>
+                <tbody id="lb-body" class="divide-y divide-slate-100"></tbody>
             </table>
         </div>
     </div>
-
+    <script src="script.js"></script>
     <script>
-        const API = "https://script.google.com/macros/s/AKfycbyoLpJeaROwNf7aFgh-RVFDoz8bi7hTQtG12xrKKHHQFGjR6HcdlPTqbVeP7lAawTcBDQ/exec";
         async function loadLB() {
-            const res = await fetch(API);
+            const res = await fetch(`${API}?action=getLeaderboard`);
             const data = await res.json();
-            const scores = {};
-
-            data.predictions.slice(1).forEach(p => {
-                const [ts, user, mId, team] = p;
-                const match = data.matches.find(m => m[0] == mId);
-                if (match && match[6] === team) {
-                    scores[user] = (scores[user] || 0) + 10;
-                }
-            });
-
-            const sorted = Object.entries(scores).sort((a,b) => b[1]-a[1]);
-            document.getElementById('lb-body').innerHTML = sorted.map(([u, p], i) => `
-                <tr class="border-t border-white/5 hover:bg-white/5 transition">
-                    <td class="p-6 font-bold ${i==0?'text-yellow-400':''}">${i+1}</td>
-                    <td class="p-6 font-semibold">${u}</td>
-                    <td class="p-6 text-right font-black text-cyan-400">${p} <span class="text-[10px] text-gray-500">XP</span></td>
-                </tr>
-            `).join('');
+            document.getElementById('lb-body').innerHTML = data.map((u, i) => `
+                <tr><td class="p-6 font-black text-slate-300 text-xl">#${i+1}</td>
+                    <td class="p-6 font-bold text-slate-800">${u.name}</td>
+                    <td class="p-6"><div class="flex gap-1.5">${u.history.map(pts => `<div class="form-dot dot-${pts}">${pts===10?'W':pts===5?'-':'L'}</div>`).join('')}</div></td>
+                    <td class="p-6 text-right font-black text-[#000080] text-xl">${u.total} XP</td></tr>`).join('');
         }
-        loadLB();
+        window.onload = loadLB;
     </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard | IPL 2026</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style> body { background-color: #0f172a; color: white; } </style>
-</head>
-<body class="p-8">
-    <div class="max-w-2xl mx-auto">
-        <a href="index.html" class="text-blue-400 text-sm">← Back to Matches</a>
-        <h1 class="text-4xl font-bold my-6">Rankings</h1>
-        <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-            <table class="w-full text-left">
-                <thead class="bg-slate-700 text-xs text-gray-400">
-                    <tr>
-                        <th class="p-4">RANK</th>
-                        <th class="p-4">PLAYER</th>
-                        <th class="p-4">POINTS</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboard-body">
-                    </tbody>
-            </table>
-        </div>
-    </div>
 </body>
 </html>

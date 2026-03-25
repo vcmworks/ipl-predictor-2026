@@ -1,77 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IPL 2026 | Prediction Pro</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL 2026 | Prediction Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root { --accent: #3b82f6; --neon: #00f2ff; }
-        body { background: radial-gradient(circle at top, #1e293b, #0f172a); font-family: 'Inter', sans-serif; color: white; min-height: 100vh; }
-        .neon-text { font-family: 'Orbitron', sans-serif; text-shadow: 0 0 10px var(--neon); }
-        .glass-card { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; transition: all 0.3s ease; }
-        .glass-card:hover { border-color: var(--neon); transform: translateY(-5px); box-shadow: 0 10px 30px -10px rgba(0, 242, 255, 0.2); }
-        .btn-predict { background: linear-gradient(135deg, #3b82f6, #8b5cf6); transition: transform 0.2s; }
-        .btn-predict:active { transform: scale(0.95); }
-        /* Login Overlay Custom Style */
-        #loginOverlay { backdrop-filter: blur(20px); background: rgba(15, 23, 42, 0.8); }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="pb-12">
-
-    <div id="loginOverlay" class="fixed inset-0 z-[100] flex items-center justify-center p-6">
-        <div class="glass-card p-8 w-full max-w-sm text-center">
-            <h2 class="neon-text text-2xl mb-6">IDENTITY CHECK</h2>
-            <div class="space-y-4">
-                <input type="text" id="loginUser" placeholder="Username" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-cyan-400">
-                <input type="password" id="loginPass" placeholder="Password" class="w-full bg-white/5 border border-white/10 p-4 rounded-xl outline-none focus:border-cyan-400">
-                <button onclick="handleLogin()" id="loginBtn" class="w-full btn-predict p-4 rounded-xl font-bold uppercase tracking-widest">Sign In</button>
-            </div>
-            <p id="loginError" class="text-red-400 text-xs mt-4 hidden">Invalid Credentials. Please try again.</p>
+<body class="min-h-screen">
+    <div id="loginOverlay" class="fixed inset-0 bg-blue-900/60 z-[999] flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-sm text-center shadow-2xl">
+            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" class="h-16 mx-auto mb-8" alt="IPL">
+            <input type="text" id="loginUser" placeholder="Username" class="w-full bg-slate-100 p-4 rounded-2xl mb-4 outline-none focus:ring-2 ring-[#FF9933]">
+            <input type="password" id="loginPass" placeholder="Password" class="w-full bg-slate-100 p-4 rounded-2xl mb-6 outline-none focus:ring-2 ring-[#FF9933]">
+            <button onclick="handleLogin()" id="loginBtn" class="w-full bg-[#000080] text-white p-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition shadow-lg">Login to Predict</button>
+            <p id="loginError" class="text-red-500 text-xs mt-4 hidden font-bold">Invalid username or password</p>
         </div>
     </div>
 
-    <header class="sticky top-0 z-40 bg-slate-900/50 backdrop-blur-md border-b border-white/10 mb-8">
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-200">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-3 h-3 bg-cyan-400 rounded-full animate-pulse"></div>
-                <h1 class="neon-text text-xl tracking-tighter">IPL <span class="text-white">2026</span></h1>
-            </div>
-            <div class="flex items-center gap-6">
-                <nav class="hidden md:flex gap-6 text-xs font-bold tracking-widest text-gray-400">
-                    <a href="index.html" class="text-cyan-400">MATCHES</a>
-                    <a href="leaderboard.html" class="hover:text-white transition">LEADERBOARD</a>
-                </nav>
-                <button onclick="logout()" class="text-[10px] border border-red-500/50 text-red-400 px-3 py-1 rounded-full hover:bg-red-500 hover:text-white transition">LOGOUT</button>
+            <div class="flex items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" class="h-8"><h1 class="text-2xl font-black text-[#000080] italic">2026</h1></div>
+            <div class="flex gap-4 items-center">
+                <a href="leaderboard.html" class="text-xs font-black text-slate-500 hover:text-[#FF9933] uppercase">Leaderboard</a>
+                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase">Logout</button>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="max-w-6xl mx-auto px-6">
-        <div class="flex justify-between items-end mb-8">
-            <div>
-                <h2 class="text-4xl font-black mb-1">Match Center</h2>
-                <p id="userWelcome" class="text-cyan-400 text-sm font-medium uppercase tracking-widest"></p>
-            </div>
-            <button onclick="adminLogin()" class="text-xs text-slate-600 hover:text-slate-400 transition">Admin Access</button>
-        </div>
-
-        <div id="matchGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="col-span-full py-20 text-center opacity-50">Syncing live data...</div>
-        </div>
-    </main>
-
-    <div id="adminModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6">
-        <div class="glass-card p-8 w-full max-w-lg max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="neon-text text-xl">DECLARE WINNERS</h3>
-                <button onclick="closeAdmin()" class="text-white text-2xl">&times;</button>
-            </div>
-            <div id="adminList" class="space-y-4"></div>
+    <div class="relative h-64 md:h-80 flex items-center justify-center overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1000&q=60" class="absolute inset-0 w-full h-full object-cover" alt="Stadium">
+        <div class="absolute inset-0 bg-gradient-to-b from-[#000080]/80 to-transparent"></div>
+        <div class="relative text-center px-6">
+            <h2 class="text-4xl md:text-6xl font-black text-white italic mb-2">PREDICTION CENTER</h2>
+            <p class="text-white/90 font-bold mt-4 text-xs uppercase tracking-widest">Next 7 Matches Available</p>
         </div>
     </div>
 
+    <main class="max-w-6xl mx-auto p-6 -mt-12 relative z-10">
+        <div id="matchGrid"></div>
+    </main>
     <script src="script.js"></script>
 </body>
 </html>

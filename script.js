@@ -1,148 +1,156 @@
-const API = "https://script.google.com/macros/s/AKfycbyoLpJeaROwNf7aFgh-RVFDoz8bi7hTQtG12xrKKHHQFGjR6HcdlPTqbVeP7lAawTcBDQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbzm7dl-JgqCLI6YCsisyhwbqxmAcLDYBC1Lfn4Dk6h7HmFRjWWYzQQcJ7hL4SWu-h0nFQ/exec";
 
-// --- SESSION & LOGIN ---
+// 1. PAGE LOAD LOGIC
 window.onload = () => {
     const session = JSON.parse(localStorage.getItem('ipl_session'));
     if (session) {
-        document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('userWelcome').innerText = `Challenger: ${session.name}`;
-        loadData();
+        // If logged in, hide overlay and load data
+        if(document.getElementById('loginOverlay')) document.getElementById('loginOverlay').classList.add('hidden');
+        loadDashboard();
     }
 };
 
+// 2. AUTHENTICATION (Fixed & Included)
 async function handleLogin() {
-    const username = document.getElementById('loginUser').value;
-    const password = document.getElementById('loginPass').value;
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
     const btn = document.getElementById('loginBtn');
-    
-    btn.innerText = "VERIFYING...";
-    
+    const errorMsg = document.getElementById('loginError');
+
+    if (!u || !p) return alert("Please enter credentials");
+
+    btn.innerText = "AUTHENTICATING...";
+    errorMsg.classList.add('hidden');
+
     try {
-        const res = await fetch(API, {
-            method: 'POST',
-            body: JSON.stringify({ action: "login", username, password })
-        });
+        const res = await fetch(`${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`);
         const data = await res.json();
-        
+
         if (data.status === "SUCCESS") {
             localStorage.setItem('ipl_session', JSON.stringify(data));
-            localStorage.setItem('ipl_user', username);
-            location.reload();
+            location.reload(); 
         } else {
-            showLoginError();
+            errorMsg.classList.remove('hidden');
+            btn.innerText = "Login to Predict";
         }
     } catch (e) {
-        showLoginError();
+        console.error("Login Error:", e);
+        btn.innerText = "Login to Predict";
+        alert("Server connection failed. Ensure Google Script is deployed as 'Anyone'.");
     }
 }
 
-function showLoginError() {
-    document.getElementById('loginError').classList.remove('hidden');
-    document.getElementById('loginBtn').innerText = "SIGN IN";
+// 3. DASHBOARD LOGIC (Rolling 7 Matches + Caching)
+async function loadDashboard() {
+    const session = JSON.parse(localStorage.getItem('ipl_session'));
+    const grid = document.getElementById('matchGrid');
+
+    try {
+        const res = await fetch(`${API}?action=getDashboard&user=${session.username}`);
+        const data = await res.json();
+        
+        const now = new Date();
+
+        // 1. Filter: Next 7 matches that don't have a winner yet
+        const upcoming = data.matches.slice(1)
+            .filter(m => !m[6] || m[6].trim() === "")
+            .sort((a,b) => new Date(a[1]) - new Date(b[1]))
+            .slice(0, 7);
+
+        grid.innerHTML = upcoming.map(m => {
+            // Precise Time Construction: YYYY-MM-DD + T + HH:mm
+            const matchTime = new Date(`${m[1]}T${m[2]}`);
+            const isLocked = now >= matchTime;
+            
+            const userVote = data.userPreds.find(v => v[2] == m[0]);
+            const pick = userVote ? userVote[3] : null;
+
+            return `
+                <div class="match-card glass p-6 ${isLocked ? 'opacity-60 grayscale' : ''}">
+                    <div class="flex justify-between text-[11px] font-bold mb-4 uppercase tracking-widest text-slate-400">
+                        <span>${m[1]} | ${m[2]} IST</span>
+                        <span class="${isLocked ? 'text-red-500 font-black' : 'text-green-600'}">
+                            ${isLocked ? '🔒 LOCKED' : '● OPEN'}
+                        </span>
+                    </div>
+                    <div class="flex gap-3 mb-4">
+                        <button onclick="handleToggle(event, ${m[0]}, '${m[3]}', '${pick}')" 
+                            ${isLocked ? 'disabled' : ''} 
+                            class="team-btn ${pick === m[3] ? 'selected' : ''} ${isLocked ? 'cursor-not-allowed' : ''}">
+                            ${m[3]}
+                        </button>
+                        <button onclick="handleToggle(event, ${m[0]}, '${m[4]}', '${pick}')" 
+                            ${isLocked ? 'disabled' : ''} 
+                            class="team-btn ${pick === m[4] ? 'selected' : ''} ${isLocked ? 'cursor-not-allowed' : ''}">
+                            ${m[4]}
+                        </button>
+                    </div>
+                    <p class="text-center text-[10px] text-slate-400 font-medium uppercase italic">${m[5]}</p>
+                    ${isLocked ? '<p class="text-center text-[9px] text-red-400 font-bold mt-2 uppercase">Predictions closed for this match</p>' : ''}
+                </div>`;
+        }).join('');
+    } catch (e) {
+        console.error("Dashboard Load Error:", e);
+    }
+}
+function renderMatches(data) {
+    const grid = document.getElementById('matchGrid');
+    const now = new Date();
+    
+    const upcoming = data.matches.slice(1)
+        .filter(m => !m[6] || m[6].trim() === "")
+        .sort((a,b) => new Date(a[1]) - new Date(b[1]))
+        .slice(0, 7);
+
+    grid.innerHTML = upcoming.map(m => {
+        const matchTime = new Date(`${m[1]}T${m[2]}`);
+        const isLocked = now > matchTime;
+        const userVote = data.userPreds.find(v => v[2] == m[0]);
+        const pick = userVote ? userVote[3] : null;
+
+        return `
+            <div class="match-card glass p-6 ${isLocked ? 'opacity-60 grayscale' : ''}">
+                <div class="flex justify-between text-[11px] font-bold mb-4 uppercase tracking-widest text-slate-400">
+                    <span>${m[1]} | ${m[2]} IST</span>
+                    <span class="${isLocked ? 'text-red-500' : 'text-green-600'}">${isLocked ? 'LOCKED' : 'OPEN'}</span>
+                </div>
+                <div class="flex gap-3 mb-4">
+                    <button onclick="handleToggle(event, ${m[0]}, '${m[3]}', '${pick}')" ${isLocked ? 'disabled' : ''} 
+                        class="team-btn ${pick === m[3] ? 'selected' : ''}">${m[3]}</button>
+                    <button onclick="handleToggle(event, ${m[0]}, '${m[4]}', '${pick}')" ${isLocked ? 'disabled' : ''} 
+                        class="team-btn ${pick === m[4] ? 'selected' : ''}">${m[4]}</button>
+                </div>
+                <p class="text-center text-[10px] text-slate-400 font-medium uppercase italic">${m[5]}</p>
+            </div>`;
+    }).join('');
+}
+
+// 4. TOGGLE LOGIC (Select / Unselect)
+async function handleToggle(event, matchId, clickedTeam, currentPick) {
+    const session = JSON.parse(localStorage.getItem('ipl_session'));
+    const btn = event.currentTarget;
+    const parent = btn.parentElement;
+    
+    let actionTeam = clickedTeam;
+
+    // If already selected, clear the vote (unselect)
+    if (clickedTeam === currentPick) {
+        btn.classList.remove('selected');
+        actionTeam = ""; 
+    } else {
+        parent.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+
+    // Background update to Google Sheets
+    fetch(API, { 
+        method: 'POST', 
+        mode: 'no-cors', 
+        body: JSON.stringify({ action: "vote", user: session.username, matchId, team: actionTeam }) 
+    }).then(() => loadDashboard()); // Refresh data to sync state
 }
 
 function logout() {
     localStorage.clear();
     location.reload();
 }
-
-// --- DATA LOADING ---
-async function loadData() {
-    const res = await fetch(API);
-    const data = await res.json();
-    window.allData = data; 
-    renderMatches(data.matches);
-}
-
-function renderMatches(matches) {
-    const grid = document.getElementById('matchGrid');
-    grid.innerHTML = '';
-    
-    matches.slice(1).forEach(m => {
-        const [id, date, time, home, away, venue, winner] = m;
-        const matchStart = new Date(`${date}T${time}`);
-        const isLocked = new Date() > matchStart;
-
-        grid.innerHTML += `
-            <div class="glass-card p-6 flex flex-col justify-between ${isLocked ? 'grayscale opacity-70' : ''}">
-                <div>
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="text-[10px] font-bold text-gray-500 tracking-tighter">${date} | ${time}</span>
-                        <span class="text-[10px] px-2 py-1 rounded bg-white/10 ${isLocked ? 'text-red-400' : 'text-cyan-400'}">
-                            ${isLocked ? 'LOCKED' : 'ACTIVE'}
-                        </span>
-                    </div>
-                    
-                    <div class="flex justify-between items-center text-center gap-2 mb-8">
-                        <div class="w-1/3">
-                            <div class="w-12 h-12 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-2 border border-blue-500/30">
-                                <span class="font-bold text-blue-400">${home[0]}</span>
-                            </div>
-                            <button onclick="vote(${id}, '${home}')" ${isLocked ? 'disabled' : ''} 
-                                class="text-xs font-bold uppercase hover:text-cyan-400 transition">${home}</button>
-                        </div>
-                        
-                        <div class="text-xs text-gray-600 font-bold">VS</div>
-                        
-                        <div class="w-1/3">
-                            <div class="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-2 border border-purple-500/30">
-                                <span class="font-bold text-purple-400">${away[0]}</span>
-                            </div>
-                            <button onclick="vote(${id}, '${away}')" ${isLocked ? 'disabled' : ''} 
-                                class="text-xs font-bold uppercase hover:text-cyan-400 transition">${away}</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="border-t border-white/5 pt-4">
-                    <p class="text-[9px] text-gray-600 uppercase text-center mb-2">${venue}</p>
-                    ${winner ? `<div class="text-center text-xs font-bold text-yellow-500 uppercase">Winner: ${winner}</div>` : 
-                    `<div class="text-center text-[10px] text-gray-400">No Result Yet</div>`}
-                </div>
-            </div>
-        `;
-    });
-}
-
-// --- PREDICTION ---
-async function vote(matchId, team) {
-    if (!confirm(`Confirm prediction for ${team}?`)) return;
-    const user = JSON.parse(localStorage.getItem('ipl_session')).name;
-    
-    await fetch(API, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({ action: "vote", user, matchId, team })
-    });
-    alert("Prediction Uploaded to Cloud!");
-}
-
-// --- ADMIN ---
-function adminLogin() {
-    const pass = prompt("Enter Master Key:");
-    if (pass === "#123user#") {
-        document.getElementById('adminModal').classList.remove('hidden');
-        const list = document.getElementById('adminList');
-        list.innerHTML = window.allData.matches.slice(1).map(m => `
-            <div class="bg-white/5 p-4 rounded-2xl flex justify-between items-center border border-white/5">
-                <span class="text-xs font-bold">${m[3]} vs ${m[4]}</span>
-                <div class="flex gap-2">
-                    <button onclick="setWinner(${m[0]}, '${m[3]}')" class="bg-cyan-600 text-[10px] px-3 py-1 rounded-lg">${m[3]}</button>
-                    <button onclick="setWinner(${m[0]}, '${m[4]}')" class="bg-purple-600 text-[10px] px-3 py-1 rounded-lg">${m[4]}</button>
-                </div>
-            </div>
-        `).join('');
-    }
-}
-
-async function setWinner(matchId, winner) {
-    await fetch(API, {
-        method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({ action: "updateWinner", password: "#123user#", matchId, winner })
-    });
-    alert("Cloud Database Updated!");
-    location.reload();
-}
-
-function closeAdmin() { document.getElementById('adminModal').classList.add('hidden'); }

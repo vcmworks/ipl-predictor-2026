@@ -1,0 +1,91 @@
+:root {
+    --tiranga-saffron: #FF9933;
+    --tiranga-white: #FFFFFF;
+    --tiranga-green: #128807;
+    --tiranga-navy: #000080;
+}
+
+body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+
+.glass {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.team-btn {
+    flex: 1;
+    padding: 1.25rem 0.5rem;
+    border-radius: 1rem;
+    font-weight: 800;
+    border: 2px solid #f1f5f9;
+    background: #f8fafc;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.team-btn:hover:not(:disabled) {
+    border-color: var(--tiranga-saffron);
+    background: white;
+}
+
+.team-btn.selected {
+    background-color: var(--tiranga-navy) !important;
+    color: white !important;
+    border-color: var(--tiranga-navy) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 128, 0.3);
+}
+
+/* Skeleton Loading Animation */
+.skeleton {
+    height: 200px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: pulse 1.5s infinite;
+    border-radius: 1.5rem;
+}
+
+@keyframes pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.team-btn {
+    flex: 1;
+    padding: 1rem;
+    border-radius: 1rem;
+    font-weight: 800;
+    border: 2px solid #f1f5f9;
+    background: #f8fafc;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+/* Saffron hover effect */
+.team-btn:hover:not(:disabled) {
+    border-color: var(--tiranga-saffron);
+    background: white;
+}
+
+/* Navy Blue selected/toggle-on effect */
+.team-btn.selected {
+    background-color: var(--tiranga-navy) !important;
+    color: white !important;
+    border-color: var(--tiranga-navy) !important;
+    transform: scale(1.05); /* Slight pop when selected */
+}
+
+/* Disabled state for locked matches */
+.team-btn:disabled {
+    cursor: not-allowed;
+    filter: saturate(0);
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+/* Ensure selected item remains visible even if locked */
+.team-btn.selected:disabled {
+    background-color: var(--tiranga-navy) !important;
+    opacity: 0.8;
+    color: white !important;
+}
