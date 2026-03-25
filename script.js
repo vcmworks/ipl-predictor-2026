@@ -1,5 +1,5 @@
 //const API = "https://script.google.com/macros/s/AKfycbzm7dl-JgqCLI6YCsisyhwbqxmAcLDYBC1Lfn4Dk6h7HmFRjWWYzQQcJ7hL4SWu-h0nFQ/exec";
-const API = "GITHUB_SECRET_API_URL";
+const API = "GOOGLE_SHEET_URL";
 // 1. PAGE LOAD LOGIC
 window.onload = () => {
     const session = JSON.parse(localStorage.getItem('ipl_session'));
