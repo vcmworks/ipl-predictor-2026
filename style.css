@@ -3,25 +3,49 @@
     --tiranga-white: #FFFFFF;
     --tiranga-green: #128807;
     --tiranga-navy: #000080;
+    --bg-light: #f8fafc;
 }
 
-body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+body {
+    background-color: var(--bg-light);
+    color: #1e293b;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
+/* Header Gradient */
+nav {
+    background: linear-gradient(90deg, var(--tiranga-saffron), var(--tiranga-white), var(--tiranga-green));
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Match Card Glassmorphism */
 .glass {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    will-change: transform;
 }
 
+.match-card:hover:not(.opacity-60) {
+    transform: translateY(-5px);
+    border-color: var(--tiranga-saffron);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+/* Toggle Buttons */
 .team-btn {
-    flex: 1;
-    padding: 1.25rem 0.5rem;
-    border-radius: 1rem;
-    font-weight: 800;
-    border: 2px solid #f1f5f9;
+    cursor: pointer;
     background: #f8fafc;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid #e2e8f0;
+    padding: 1.25rem 0.5rem;
+    border-radius: 1.25rem;
+    font-weight: 900;
+    transition: all 0.2s ease;
+    flex: 1;
+    touch-action: manipulation;
 }
 
 .team-btn:hover:not(:disabled) {
@@ -29,20 +53,22 @@ body { background: #f8fafc; font-family: 'Inter', sans-serif; }
     background: white;
 }
 
+/* Selection State: Navy Blue (Ashoka Chakra) */
 .team-btn.selected {
     background-color: var(--tiranga-navy) !important;
     color: white !important;
     border-color: var(--tiranga-navy) !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 128, 0.3);
+    box-shadow: 0 8px 15px rgba(0, 0, 128, 0.2);
+    transform: scale(1.02);
 }
 
-/* Skeleton Loading Animation */
+/* Skeleton Loading Pulse */
 .skeleton {
     height: 200px;
+    border-radius: 1.5rem;
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
     background-size: 200% 100%;
     animation: pulse 1.5s infinite;
-    border-radius: 1.5rem;
 }
 
 @keyframes pulse {
@@ -50,42 +76,15 @@ body { background: #f8fafc; font-family: 'Inter', sans-serif; }
     100% { background-position: -200% 0; }
 }
 
-.team-btn {
-    flex: 1;
-    padding: 1rem;
-    border-radius: 1rem;
-    font-weight: 800;
-    border: 2px solid #f1f5f9;
-    background: #f8fafc;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-}
-
-/* Saffron hover effect */
-.team-btn:hover:not(:disabled) {
-    border-color: var(--tiranga-saffron);
-    background: white;
-}
-
-/* Navy Blue selected/toggle-on effect */
-.team-btn.selected {
-    background-color: var(--tiranga-navy) !important;
-    color: white !important;
-    border-color: var(--tiranga-navy) !important;
-    transform: scale(1.05); /* Slight pop when selected */
-}
-
-/* Disabled state for locked matches */
-.team-btn:disabled {
-    cursor: not-allowed;
-    filter: saturate(0);
-    border-color: #cbd5e1;
-    background: #f1f5f9;
-}
-
-/* Ensure selected item remains visible even if locked */
-.team-btn.selected:disabled {
-    background-color: var(--tiranga-navy) !important;
-    opacity: 0.8;
-    color: white !important;
+/* Leaderboard Dots */
+.form-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 900;
+    color: white;
 }

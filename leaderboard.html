@@ -1,35 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>IPL Standings</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPL 2026 | Standings</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .form-dot { 
+            width: 28px; height: 28px; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 10px; font-weight: 900; color: white; 
+        }
+        /* Specific colors for the 10/5/0 logic */
+        .bg-win { background-color: #128807; } /* Tiranga Green */
+        .bg-miss { background-color: #94a3b8; } /* Slate Grey */
+        .bg-loss { background-color: #ef4444; } /* Red */
+    </style>
 </head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-4"><img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" class="h-12"><h1 class="text-3xl font-black italic text-[#000080]">STANDINGS</h1></div>
-            <a href="index.html" class="bg-white border px-6 py-2 rounded-2xl text-xs font-black text-[#000080]">← BACK</a>
+<body class="min-h-screen bg-slate-50">
+
+    <nav class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-slate-200">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" 
+                     class="h-8" alt="IPL Logo">
+                <h1 class="text-2xl font-black text-[#000080] italic tracking-tighter">2026</h1>
+            </div>
+            <div class="flex gap-6 items-center">
+                <a href="index.html" class="text-xs font-black text-slate-600 hover:text-[#FF9933] transition-colors uppercase tracking-widest">Match Center</a>
+                <button onclick="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-[10px] font-black hover:bg-red-600 hover:text-white transition uppercase">Logout</button>
+            </div>
         </div>
-        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border">
-            <table class="w-full text-left">
-                <thead class="bg-slate-50 text-[10px] uppercase text-slate-400 font-bold">
-                    <tr><th class="p-6">Rank</th><th class="p-6">Player</th><th class="p-6">Form (Last 5)</th><th class="p-6 text-right">Points</th></tr>
-                </thead>
-                <tbody id="lb-body" class="divide-y divide-slate-100"></tbody>
-            </table>
+    </nav>
+
+    <div class="relative h-48 md:h-64 flex items-center justify-center overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1500&q=80" 
+             class="absolute inset-0 w-full h-full object-cover" alt="Cricket Stadium">
+        <div class="absolute inset-0 bg-gradient-to-b from-[#000080]/80 to-transparent"></div>
+        <div class="relative text-center px-6">
+            <h2 class="text-4xl md:text-5xl font-black text-white italic mb-2 drop-shadow-lg uppercase">Leaderboard</h2>
+            <div class="h-1 w-16 bg-[#FF9933] mx-auto rounded-full"></div>
         </div>
     </div>
+
+    <main class="max-w-4xl mx-auto p-6 -mt-10 relative z-10">
+        <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-200">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 border-b border-slate-100 text-[10px] uppercase tracking-[0.2em] text-slate-400 font-black">
+                    <tr>
+                        <th class="p-6 text-center">Pos</th>
+                        <th class="p-6">Challenger</th>
+                        <th class="p-6">Form (Last 5)</th>
+                        <th class="p-6 text-right">Points</th>
+                    </tr>
+                </thead>
+                <tbody id="lb-body" class="divide-y divide-slate-100 font-bold text-slate-700">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
     <script src="script.js"></script>
     <script>
+        // Use the same API from script.js
         async function loadLB() {
             const res = await fetch(`${API}?action=getLeaderboard`);
             const data = await res.json();
+            
             document.getElementById('lb-body').innerHTML = data.map((u, i) => `
-                <tr><td class="p-6 font-black text-slate-300 text-xl">#${i+1}</td>
-                    <td class="p-6 font-bold text-slate-800">${u.name}</td>
-                    <td class="p-6"><div class="flex gap-1.5">${u.history.map(pts => `<div class="form-dot dot-${pts}">${pts===10?'W':pts===5?'-':'L'}</div>`).join('')}</div></td>
-                    <td class="p-6 text-right font-black text-[#000080] text-xl">${u.total} XP</td></tr>`).join('');
+                <tr class="hover:bg-blue-50/50 transition-colors">
+                    <td class="p-6 text-center font-black text-slate-300 text-xl italic">${i+1}</td>
+                    <td class="p-6">
+                        <span class="block text-lg font-black text-[#000080]">${u.name}</span>
+                        <span class="text-[9px] uppercase text-slate-400">Verified Predictor</span>
+                    </td>
+                    <td class="p-6">
+                        <div class="flex gap-1.5">
+                            ${u.history.map(pts => {
+                                let colorClass = pts === 10 ? 'bg-win' : pts === 5 ? 'bg-miss' : 'bg-loss';
+                                let symbol = pts === 10 ? 'W' : pts === 5 ? '−' : 'L';
+                                return `<div class="form-dot ${colorClass}" title="${pts} Points">${symbol}</div>`;
+                            }).join('')}
+                        </div>
+                    </td>
+                    <td class="p-6 text-right">
+                        <span class="text-2xl font-black text-[#FF9933]">${u.total}</span>
+                        <span class="text-[10px] text-slate-400 block uppercase tracking-tighter">XP Points</span>
+                    </td>
+                </tr>
+            `).join('');
         }
         window.onload = loadLB;
     </script>
