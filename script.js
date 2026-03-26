@@ -1,15 +1,10 @@
 const API = "https://script.google.com/macros/s/AKfycbzm7dl-JgqCLI6YCsisyhwbqxmAcLDYBC1Lfn4Dk6h7HmFRjWWYzQQcJ7hL4SWu-h0nFQ/exec";
-        //     https://script.google.com/macros/s/AKfycbzm7dl-JgqCLI6YCsisyhwbqxmAcLDYBC1Lfn4Dk6h7HmFRjWWYzQQcJ7hL4SWu-h0nFQ/exec
-//https://script.google.com/macros/s/AKfycbzm7dl-JgqCLI6YCsisyhwbqxmAcLDYBC1Lfn4Dk6h7HmFRjWWYzQQcJ7hL4SWu-h0nFQ/exec
-// GitHub Action will replace this with your Secret URL during deployment
-//const API = "GITHUB_SECRET_API_URL"; 
 
-// 1. PAGE LOAD LOGIC
+// 1. PAGE LOAD
 window.onload = () => {
     const session = JSON.parse(localStorage.getItem('ipl_session'));
     if (session) {
-        // If logged in, hide overlay and load the match center
-        if(document.getElementById('loginOverlay')) document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('loginOverlay').classList.add('hidden');
         loadDashboard();
     }
 };
@@ -24,7 +19,7 @@ async function handleLogin() {
     if (!u || !p) return alert("Please enter credentials");
 
     btn.innerText = "AUTHENTICATING...";
-    if(errorMsg) errorMsg.classList.add('hidden');
+    errorMsg.classList.add('hidden');
 
     try {
         const res = await fetch(`${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`);
@@ -34,17 +29,17 @@ async function handleLogin() {
             localStorage.setItem('ipl_session', JSON.stringify(data));
             location.reload(); 
         } else {
-            if(errorMsg) errorMsg.classList.remove('hidden');
+            errorMsg.classList.remove('hidden');
             btn.innerText = "Login to Predict";
         }
     } catch (e) {
         console.error("Login Error:", e);
         btn.innerText = "Login to Predict";
-        alert("Connection failed. Ensure Google Script is deployed as 'Anyone'.");
+        alert("Server unreachable. Check script deployment.");
     }
 }
 
-// 3. DASHBOARD LOGIC (Rolling 7 Matches + German Time + Locking)
+// 3. DASHBOARD (Next 6 Future Matches)
 async function loadDashboard() {
     const session = JSON.parse(localStorage.getItem('ipl_session'));
     const grid = document.getElementById('matchGrid');
@@ -53,110 +48,107 @@ async function loadDashboard() {
     try {
         const res = await fetch(`${API}?action=getDashboard&user=${session.username}`);
         const data = await res.json();
-        
         const now = new Date();
 
-        // Filter: Next 7 matches where no winner is declared yet
+        // Process data and filter for FUTURE matches only
         const upcoming = data.matches.slice(1)
-            .filter(m => !m[6] || m[6].trim() === "")
-            .sort((a, b) => {
-                const dateA = a[1].split('/').reverse().join('-');
-                const dateB = b[1].split('/').reverse().join('-');
-                return new Date(`${dateA}T${a[2]}`) - new Date(`${dateB}T${b[2]}`);
+            .map(m => {
+                const dateParts = m[1].split('/'); // Expects DD/MM/YYYY
+                const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+                const istMatchTime = new Date(`${formattedDate}T${m[2]}:00+05:30`);
+                return { raw: m, startTime: istMatchTime };
             })
-            .slice(0, 7);
+            .filter(item => item.startTime > now) // Only show if match hasn't started
+            .sort((a, b) => a.startTime - b.startTime)
+            .slice(0, 6); // Limit to 6
 
-        grid.innerHTML = upcoming.map(m => {
-            // Construct the IST match time from Google Sheet (IST is UTC+5:30)
-            const dateParts = m[1].split('/');
-            const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-            const istMatchTime = new Date(`${formattedDate}T${m[2]}:00+05:30`);
+        if (upcoming.length === 0) {
+            grid.innerHTML = `<div class="col-span-full glass p-10 text-center text-slate-500 font-bold uppercase">No matches open for prediction.</div>`;
+            return;
+        }
+
+        grid.innerHTML = upcoming.map(item => {
+            const m = item.raw;
+            const istTime = item.startTime;
             
-            // Convert to German Time (CET/CEST)
-            const germanTimeStr = istMatchTime.toLocaleTimeString('de-DE', {
-                timeZone: 'Europe/Berlin',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            const deTime = istTime.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+            const deDate = istTime.toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit' });
 
-            const germanDateStr = istMatchTime.toLocaleDateString('de-DE', {
-                timeZone: 'Europe/Berlin',
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-
-            const isLocked = now >= istMatchTime;
             const userVote = data.userPreds.find(v => v[2] == m[0]);
             const pick = userVote ? userVote[3] : null;
 
             return `
-                <div class="match-card glass p-6 ${isLocked ? 'opacity-60 grayscale' : ''}">
-                    <div class="flex justify-between text-[11px] font-bold mb-4 uppercase tracking-widest text-slate-400">
-                        <span>${germanDateStr} | ${germanTimeStr} (DE Time)</span>
-                        <span class="${isLocked ? 'text-red-500 font-black' : 'text-green-600'}">
-                            ${isLocked ? '🔒 LOCKED' : '● OPEN'}
-                        </span>
+                <div class="match-card glass p-6 animate-fade-in shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex justify-between text-[10px] font-black mb-4 uppercase tracking-widest text-slate-400">
+                        <span>${deDate} | ${deTime} (DE TIME)</span>
+                        <span class="text-green-500">● Open</span>
                     </div>
                     <div class="flex gap-3 mb-4">
-                        <button onclick="handleToggle(event, ${m[0]}, '${m[3]}', '${pick}', '${istMatchTime.toISOString()}')" 
-                            ${isLocked ? 'disabled' : ''} 
-                            class="team-btn ${pick === m[3] ? 'selected' : ''} ${isLocked ? 'cursor-not-allowed' : ''}">
+                        <button onclick="handleToggle(event, ${m[0]}, '${m[3]}', '${pick}', '${istTime.toISOString()}')" 
+                            class="team-btn ${pick === m[3] ? 'selected' : ''}">
                             ${m[3]}
                         </button>
-                        <button onclick="handleToggle(event, ${m[0]}, '${m[4]}', '${pick}', '${istMatchTime.toISOString()}')" 
-                            ${isLocked ? 'disabled' : ''} 
-                            class="team-btn ${pick === m[4] ? 'selected' : ''} ${isLocked ? 'cursor-not-allowed' : ''}">
+                        <button onclick="handleToggle(event, ${m[0]}, '${m[4]}', '${pick}', '${istTime.toISOString()}')" 
+                            class="team-btn ${pick === m[4] ? 'selected' : ''}">
                             ${m[4]}
                         </button>
                     </div>
-                    <div class="text-center pt-2 border-t border-slate-100">
-                        <p class="text-[9px] text-slate-400 uppercase italic">IST: ${m[2]} | ${m[5]}</p>
-                        ${isLocked ? '<p class="text-[9px] text-red-500 font-bold mt-1 uppercase">Predictions Closed</p>' : ''}
+                    <div class="text-center pt-3 border-t border-slate-100 flex justify-between items-center">
+                        <span class="text-[9px] text-slate-400 font-bold uppercase italic">Match #${m[0]}</span>
+                        <span class="text-[9px] text-slate-400 font-bold uppercase italic">IST: ${m[2]}</span>
                     </div>
                 </div>`;
         }).join('');
     } catch (e) {
-        console.error("Dashboard Load Error:", e);
+        console.error("Dashboard Error:", e);
+        grid.innerHTML = `<p class="col-span-full text-center text-red-500">Failed to load matches. Please try again.</p>`;
     }
 }
 
-// 4. TOGGLE LOGIC (Select / Unselect / Time-Security)
+// 4. PREDICTION LOGIC
 async function handleToggle(event, matchId, clickedTeam, currentPick, isoTime) {
     const now = new Date();
     const matchTime = new Date(isoTime);
 
-    // Final security check: Prevent voting if match has started
     if (now >= matchTime) {
-        alert("🔒 This match has already started in Germany/India! Predictions are locked.");
+        alert("🔒 Match has already started! Entry locked.");
         return loadDashboard();
     }
 
     const session = JSON.parse(localStorage.getItem('ipl_session'));
     const btn = event.currentTarget;
+    let actionTeam = (clickedTeam === currentPick) ? "" : clickedTeam;
+
+    // Local UI Update for speed
     const parent = btn.parentElement;
-    
-    let actionTeam = clickedTeam;
+    parent.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
+    if (actionTeam !== "") btn.classList.add('selected');
+    btn.style.opacity = "0.5";
 
-    // Toggle Logic: If clicking the same team, remove the selection
-    if (clickedTeam === currentPick) {
-        btn.classList.remove('selected');
-        actionTeam = ""; 
-    } else {
-        // Switch selection to the new team
-        parent.querySelectorAll('.team-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-    }
-
-    // UI Feedback: Fade button slightly while saving
-    btn.style.opacity = "0.7";
-
-    // Send update to Google Sheets
     try {
         await fetch(API, { 
             method: 'POST', 
             mode: 'no-cors', 
             body: JSON.stringify({ 
+                action: "vote", 
+                user: session.username, 
+                matchId: matchId, 
+                team: actionTeam 
+            }) 
+        });
+        // Silent refresh
+        loadDashboard();
+    } catch (e) {
+        alert("Save failed. Check connection.");
+        loadDashboard();
+    }
+}
+
+// 5. LOGOUT
+function logout() {
+    localStorage.clear();
+    location.reload();
+}
                 action: "vote", 
                 user: session.username, 
                 matchId: matchId, 
