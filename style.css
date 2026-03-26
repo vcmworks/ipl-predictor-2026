@@ -3,39 +3,50 @@
     --tiranga-white: #FFFFFF;
     --tiranga-green: #128807;
     --tiranga-navy: #000080;
-    --bg-light: #f8fafc;
+    --ipl-yellow: #FFD700; /* Primary background */
 }
 
 body {
-    background-color: var(--bg-light);
+    background-color: var(--ipl-yellow);
     color: #1e293b;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
-    -webkit-tap-highlight-color: transparent;
 }
 
-/* Header Gradient */
+/* Header with Tiranga Gradient */
 nav {
     background: linear-gradient(90deg, var(--tiranga-saffron), var(--tiranga-white), var(--tiranga-green));
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
 
-/* Match Card Glassmorphism */
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Glassmorphism Cards */
 .glass {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 1.5rem;
     transition: transform 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-    will-change: transform;
 }
 
-.match-card:hover:not(.opacity-60) {
-    transform: translateY(-5px);
+.match-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     border-color: var(--tiranga-saffron);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
 }
 
-/* Toggle Buttons */
+/* Prediction Buttons */
 .team-btn {
     cursor: pointer;
     background: #f8fafc;
@@ -43,9 +54,9 @@ nav {
     padding: 1.25rem 0.5rem;
     border-radius: 1.25rem;
     font-weight: 900;
+    text-transform: uppercase;
     transition: all 0.2s ease;
     flex: 1;
-    touch-action: manipulation;
 }
 
 .team-btn:hover:not(:disabled) {
@@ -53,38 +64,39 @@ nav {
     background: white;
 }
 
-/* Selection State: Navy Blue (Ashoka Chakra) */
 .team-btn.selected {
     background-color: var(--tiranga-navy) !important;
     color: white !important;
     border-color: var(--tiranga-navy) !important;
-    box-shadow: 0 8px 15px rgba(0, 0, 128, 0.2);
-    transform: scale(1.02);
+    box-shadow: 0 8px 15px rgba(0, 0, 128, 0.3);
+    transform: scale(1.05);
 }
 
-/* Skeleton Loading Pulse */
-.skeleton {
-    height: 200px;
-    border-radius: 1.5rem;
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-    background-size: 200% 100%;
-    animation: pulse 1.5s infinite;
+/* Leaderboard Table Styles */
+.leaderboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
 }
 
-@keyframes pulse {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+.leaderboard-row {
+    background: white;
+    transition: transform 0.2s;
 }
 
-/* Leaderboard Dots */
+.leaderboard-row:hover {
+    transform: scale(1.01);
+}
+
+/* Form Dots (W/L/N) */
 .form-dot {
-    width: 26px;
-    height: 26px;
+    width: 26px; height: 26px;
     border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 900;
-    color: white;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900; color: white;
+    margin-right: 4px;
 }
+.dot-win { background-color: var(--tiranga-green); }
+.dot-loss { background-color: #ef4444; }
+.dot-none { background-color: #94a3b8; }
