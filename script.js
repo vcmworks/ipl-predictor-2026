@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbxju6I3rdmrhBLmpTxQq-tXuDE5T919INk2UzDEy_fSig0vkfta4r3AwQ3p6-QvHNJ7iQ/exec"; 
+const API = "https://script.google.com/macros/s/AKfycbzgRFE0Vy6i8Afj-nAyf6MUgx9-Eeuxy4PvhmEfAaE0EFdA9nN3JVEywj6eKNBo-BcVXQ/exec"; 
 
 // 1. SESSION CHECK & INITIAL LOAD
 window.onload = () => {
@@ -29,32 +29,25 @@ async function handleLogin() {
     const p = document.getElementById('loginPass').value.trim();
     const btn = document.getElementById('loginBtn');
     
-    if (!u || !p) {
-        alert("Please enter both username and password.");
-        return;
-    }
-
     btn.innerText = "VERIFYING...";
-    btn.disabled = true;
 
     try {
-        // Note: Using a GET request for login to receive the JSON response
-        const res = await fetch(`${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`);
+        // Construct the URL with query parameters
+        const url = `${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`;
+        
+        const res = await fetch(url);
         const data = await res.json();
 
         if (data.status === "SUCCESS") {
             localStorage.setItem('ipl_session', JSON.stringify(data));
             location.reload(); 
         } else {
-            alert("❌ Invalid Credentials. Try again.");
+            alert("❌ Login Failed: Check Username or Password.");
             btn.innerText = "Start Predicting";
-            btn.disabled = false;
         }
     } catch (e) {
-        console.error("Login Error:", e);
-        alert("📡 Connection Error: Ensure your Apps Script is deployed to 'Anyone'.");
+        alert("📡 Connection Error: Ensure your Apps Script is deployed as 'Anyone'.");
         btn.innerText = "Start Predicting";
-        btn.disabled = false;
     }
 }
 
