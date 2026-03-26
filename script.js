@@ -13,6 +13,35 @@ window.onload = () => {
     }
 };
 
+async function handleLogin() {
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value.trim();
+    const btn = document.getElementById('loginBtn');
+    const errorMsg = document.getElementById('loginError');
+
+    if (!u || !p) return;
+    btn.innerText = "VERIFYING...";
+    errorMsg.classList.add('hidden');
+
+    try {
+        // GET request to check credentials
+        const res = await fetch(`${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`);
+        const data = await res.json();
+
+        if (data.status === "SUCCESS") {
+            localStorage.setItem('ipl_session', JSON.stringify(data));
+            location.reload(); 
+        } else {
+            errorMsg.classList.remove('hidden');
+            btn.innerText = "Enter Arena";
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Connection Error. Make sure you deployed as 'Anyone'.");
+        btn.innerText = "Enter Arena";
+    }
+}
+
 async function loadDashboard() {
     const session = JSON.parse(localStorage.getItem('ipl_session'));
     const grid = document.getElementById('matchGrid');
