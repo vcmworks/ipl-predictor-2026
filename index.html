@@ -6,24 +6,29 @@
     <title>IPL 2026 | Prediction Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); border-radius: 1.5rem; }
+        .team-btn { 
+            flex: 1; padding: 1rem; border-radius: 1rem; font-weight: 900; text-transform: uppercase;
+            transition: all 0.2s; border: 2px solid #e2e8f0; background: white; color: #1e293b;
+        }
+        .team-btn.selected { background: #000080; color: white; border-color: #000080; transform: scale(1.05); }
+        .team-btn:hover:not(:disabled) { border-color: #FF9933; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen pb-12">
 
     <div id="loginOverlay" class="fixed inset-0 bg-blue-900/60 z-[999] flex items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl border border-white">
+        <div class="bg-white p-8 rounded-[2.5rem] w-full max-w-sm text-center shadow-2xl">
             <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" 
-                 class="h-20 mx-auto mb-8 drop-shadow-md" alt="IPL Logo">
-            
+                 class="h-20 mx-auto mb-8" alt="IPL Logo">
             <div class="space-y-4">
-                <input type="text" id="loginUser" placeholder="Username" 
-                       class="w-full bg-slate-100 border-none p-4 rounded-2xl outline-none focus:ring-2 ring-[#FF9933] transition-all">
-                
-                <input type="password" id="loginPass" placeholder="Password" 
-                       class="w-full bg-slate-100 border-none p-4 rounded-2xl outline-none focus:ring-2 ring-[#FF9933] transition-all">
-                
-                <button onclick="handleLogin()" id="loginBtn" 
-                        class="w-full bg-[#000080] text-white p-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-800 transition transform active:scale-95 shadow-lg">
+                <input type="text" id="loginUser" placeholder="Username" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-[#FF9933]">
+                <input type="password" id="loginPass" placeholder="Password" class="w-full bg-slate-100 p-4 rounded-2xl outline-none focus:ring-2 ring-[#FF9933]">
+                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-[#000080] text-white p-4 rounded-2xl font-black uppercase tracking-widest shadow-lg active:scale-95 transition">
                     Enter Arena
                 </button>
             </div>
@@ -31,36 +36,31 @@
         </div>
     </div>
 
-    <nav class="sticky top-0 z-50">
+    <nav class="bg-white/80 sticky top-0 z-50 backdrop-blur-md border-b">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" 
-                     class="h-8" alt="IPL Logo">
-                <h1 class="text-2xl font-black text-[#000080] italic tracking-tighter">2026</h1>
+                <img src="https://upload.wikimedia.org/wikipedia/en/thumb/8/84/Indian_Premier_League_Official_Logo.svg/1200px-Indian_Premier_League_Official_Logo.svg.png" class="h-8">
+                <h1 class="text-2xl font-black text-[#000080] italic">2026</h1>
             </div>
-            <div class="flex gap-4 items-center">
-                <a href="leaderboard.html" class="text-xs font-black text-[#000080] hover:text-white transition-colors uppercase tracking-widest">Leaderboard</a>
-                <button onclick="logout()" class="bg-white/20 text-[#000080] px-4 py-2 rounded-full text-[10px] font-black hover:bg-red-600 hover:text-white transition uppercase">Logout</button>
+            <div class="flex gap-6 items-center">
+                <a href="leaderboard.html" class="text-xs font-black text-slate-500 hover:text-[#000080] uppercase tracking-widest transition">Leaderboard</a>
+                <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Logout</button>
             </div>
         </div>
     </nav>
 
-    <div class="relative h-64 md:h-80 flex items-center justify-center overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=1000&q=60" 
-             class="absolute inset-0 w-full h-full object-cover" alt="Stadium">
-        <div class="absolute inset-0 bg-gradient-to-b from-[#000080]/80 to-transparent"></div>
+    <div class="relative h-64 flex items-center justify-center overflow-hidden bg-[#000080]">
         <div class="relative text-center px-6">
-            <h2 class="text-4xl md:text-6xl font-black text-white italic mb-2 drop-shadow-lg uppercase">Prediction Center</h2>
-            <div class="h-1 w-24 bg-[#FF9933] mx-auto rounded-full"></div>
-            <p class="text-white/90 font-bold mt-4 text-xs uppercase tracking-widest italic">Predict Next 7 Matches</p>
+            <h2 class="text-4xl md:text-5xl font-black text-white italic mb-2 uppercase">Prediction Center</h2>
+            <p class="text-white/70 font-bold text-xs uppercase tracking-[0.3em]">Upcoming 6 Matches</p>
         </div>
     </div>
 
-    <main class="max-w-6xl mx-auto p-6 -mt-12 relative z-10">
+    <main class="max-w-6xl mx-auto p-6 -mt-10 relative z-10">
         <div id="matchGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
-            <div class="skeleton"></div>
+            <div class="col-span-full text-center py-20">
+                <p class="text-white animate-pulse font-bold italic">Fetching live schedule...</p>
+            </div>
         </div>
     </main>
 
