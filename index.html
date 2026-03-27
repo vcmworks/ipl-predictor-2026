@@ -9,64 +9,64 @@
 </head>
 <body>
     <div class="background-slideshow">
-        <div class="slide" style="background-image: url('https://p.imgci.com/db/PICTURES/CMS/293700/293795.jpg')"></div>
+        <div class="slide" style="background-image: url('https://media.crictracker.com/web/large/media/attachments/1744136145587_MS-Dhoni,-Rohit-Sharma-and-Virat-Kohli.webp')"></div>
         <div class="slide" style="background-image: url('https://x.com/InsideSportIND/status/1770766561009152163/photo/1')"></div>
         <div class="slide" style="background-image: url('https://images.catchnews.com/upload/2020/06/28/Virat-Dhoni-Rohit_194223_730x419-m.jpg')"></div>
     </div>
 
     <div class="overlay"></div>
     <div class="container">
-        <!-- Login Screen  -->
-        <div id="login-screen" class="card glass-card">
+        <div id="login-screen" class="card glass-card login-centered">
             <div class="ipl-logo">🏏</div>
             <h1>IPL 2026</h1>
             <p class="subtitle">Predictor Challenge · Official Fan Game</p>
-            <input type="text" id="username" placeholder="Username" autocomplete="username">
-            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-            <button onclick="handleLogin()" class="btn-primary">Sign in →</button>
+            
+            <div class="login-form">
+                <input type="text" id="username" placeholder="Username" autocomplete="username">
+                <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                <div class="button-container">
+                    <button onclick="handleLogin()" id="login-btn" class="btn-primary btn-full">
+                        <span id="btn-text">SIGN IN →</span>
+                    </button>
+                </div>
+            </div>
             <p class="demo-note">Demo Users: user1 / pass1 | admin / admin123</p>
         </div>
 
-        <!-- Main App -->
         <div id="main-app" class="hidden">
             <div class="user-header glass-card">
                 <span class="welcome-text">👋 Welcome, <span id="display-name"></span></span>
                 <button class="logout-btn" onclick="location.reload()">← Logout</button>
             </div>
 
-            <!-- Leaderboard -->
-            <div class="card glass-card">
-                <h3>🏆 Elite Leaderboard</h3>
-                <div class="leaderboard-container">
-                    <table class="leaderboard-table" id="lb-table">
-                        <thead>
-                            <tr><th>Rank</th><th>Player</th><th style="text-align:right">🏅 Points</th></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <p class="points-info">✨ Correct: +10 | Not Voted: +5 | Wrong: 0</p>
-                
-                <!-- Admin Buttons (hidden by default) -->
-                <div id="admin-buttons" class="admin-section" style="display: none;">
-                    <button onclick="recalculateAllPoints()" class="btn-warning">🔄 Recalculate All Points</button>
-                    <button onclick="resetAllPoints()" class="btn-danger">⚠️ Reset All Points to Zero</button>
-                </div>
-            </div>
-
-            <!-- Available Matches -->
             <h3 class="section-title">🎯 Matches Open for Voting</h3>
             <div id="matches-container">
                 <div class="loader">✨ Loading matches...</div>
             </div>
 
-            <!-- Completed Matches -->
+            <div class="card glass-card">
+                <h3>🏆 Elite Leaderboard</h3>
+                <div class="leaderboard-container">
+                    <table class="leaderboard-table" id="lb-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Player</th>
+                                <th style="text-align:right">🏅 Points</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="points-info">✨ Correct: +10 | Not Voted: +5 | Wrong: 0</p>
+            </div>
+
             <h3 class="section-title">🏆 Completed Matches</h3>
             <div id="completed-container">
                 <div class="loader">✨ Loading...</div>
             </div>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>

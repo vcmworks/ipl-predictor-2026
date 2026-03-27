@@ -53,19 +53,21 @@ function escapeHtml(str) {
 }
 
 // ==================== LOGIN ====================
+// Locate your handleLogin function and replace it with this:
 async function handleLogin() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    const btn = document.querySelector('#login-screen button');
-    const originalText = btn.innerHTML;
+    const btn = document.getElementById('login-btn');
+    const btnText = document.getElementById('btn-text');
     
     if (!username || !password) {
         alert("Please enter username and password");
         return;
     }
     
+    // Show loading state
     btn.disabled = true;
-    btn.innerHTML = '⏳ Loading...';
+    btnText.innerHTML = '⏳ AUTHENTICATING...';
     
     try {
         const data = await callAPI({ action: 'login', username, password });
@@ -73,29 +75,25 @@ async function handleLogin() {
         if (data.success) {
             user = { username, name: data.name };
             document.getElementById('display-name').innerText = user.name;
+            
+            // Switch screens
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('main-app').classList.remove('hidden');
-            
-            // Show admin buttons if admin
-            if (username === 'admin') {
-                const adminButtons = document.getElementById('admin-buttons');
-                if (adminButtons) adminButtons.style.display = 'block';
-            }
             
             await loadData();
             if (autoRefresh) clearInterval(autoRefresh);
             autoRefresh = setInterval(loadData, 30000);
         } else {
             alert("Login failed: " + data.error);
+            btn.disabled = false;
+            btnText.innerHTML = 'SIGN IN →';
         }
     } catch (err) {
         alert("Connection error: " + err.message);
-    } finally {
         btn.disabled = false;
-        btn.innerHTML = originalText;
+        btnText.innerHTML = 'SIGN IN →';
     }
 }
-
 // ==================== LOAD DATA ====================
 async function loadData() {
     if (!user) return;
