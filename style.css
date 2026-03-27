@@ -1,102 +1,457 @@
-:root {
-    --tiranga-saffron: #FF9933;
-    --tiranga-white: #FFFFFF;
-    --tiranga-green: #128807;
-    --tiranga-navy: #000080;
-    --ipl-yellow: #FFD700; /* Primary background */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    background-color: var(--ipl-yellow);
-    color: #1e293b;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    margin: 0;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    background: linear-gradient(135deg, #0a0f1e 0%, #0a1a2a 100%);
 }
 
-/* Header with Tiranga Gradient */
-nav {
-    background: linear-gradient(90deg, var(--tiranga-saffron), var(--tiranga-white), var(--tiranga-green));
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    position: sticky;
+/* Background Image with Overlay */
+body::before {
+    content: '';
+    position: fixed;
     top: 0;
-    z-index: 50;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('https://www.iplt20.com/assets/images/ipl-logo-new.svg'), 
+                      linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%);
+    background-size: auto, cover;
+    background-position: 30% 50%, center;
+    background-repeat: no-repeat, no-repeat;
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
 }
 
-.nav-container {
-    max-width: 1200px;
+/* Cricket Stadium Background */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1600&h=900&fit=crop');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.2;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(10, 15, 30, 0.85) 0%, rgba(10, 26, 42, 0.9) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.container {
+    max-width: 650px;
     margin: 0 auto;
-    padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    position: relative;
+    z-index: 2;
 }
 
 /* Glassmorphism Cards */
-.glass {
-    background: rgba(255, 255, 255, 0.95);
+.glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 1.5rem;
-    transition: transform 0.2s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.match-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-    border-color: var(--tiranga-saffron);
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 107, 53, 0.5);
 }
 
-/* Prediction Buttons */
-.team-btn {
+/* Typography */
+h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #ff6b35, #ff8c42, #ffb347);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-align: center;
+    margin-bottom: 5px;
+    letter-spacing: -0.5px;
+}
+
+h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff8c42, #ffb347);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.subtitle {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 25px;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.section-title {
+    color: #ffb347;
+    margin: 20px 5px 15px 5px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-left: 3px solid #ff6b35;
+    padding-left: 12px;
+}
+
+.ipl-logo {
+    text-align: center;
+    font-size: 3rem;
+    margin-bottom: 10px;
+}
+
+/* Form Elements */
+input, select {
+    width: 100%;
+    padding: 14px 18px;
+    margin: 10px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 40px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: white;
+    transition: all 0.2s;
+    outline: none;
+}
+
+input:focus, select:focus {
+    border-color: #ff6b35;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Buttons */
+button, .btn-primary, .btn-warning, .btn-danger {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 40px;
+    font-weight: 700;
+    font-size: 1rem;
+    font-family: inherit;
     cursor: pointer;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    padding: 1.25rem 0.5rem;
-    border-radius: 1.25rem;
-    font-weight: 900;
-    text-transform: uppercase;
     transition: all 0.2s ease;
-    flex: 1;
+    margin-top: 8px;
 }
 
-.team-btn:hover:not(:disabled) {
-    border-color: var(--tiranga-saffron);
-    background: white;
+.btn-primary {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
-.team-btn.selected {
-    background-color: var(--tiranga-navy) !important;
-    color: white !important;
-    border-color: var(--tiranga-navy) !important;
-    box-shadow: 0 8px 15px rgba(0, 0, 128, 0.3);
-    transform: scale(1.05);
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
 }
 
-/* Leaderboard Table Styles */
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    margin-bottom: 10px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Vote Buttons */
+.vote-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.vote-btn {
+    background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 140, 66, 0.2));
+    border: 1px solid rgba(255, 107, 53, 0.5);
+    padding: 12px;
+    font-weight: 600;
+    color: #ffb347;
+    margin-top: 0;
+}
+
+.vote-btn:hover {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    color: white;
+    border-color: transparent;
+}
+
+/* Leaderboard Table */
+.leaderboard-container {
+    overflow-x: auto;
+}
+
 .leaderboard-table {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0 8px;
+    border-collapse: collapse;
 }
 
-.leaderboard-row {
-    background: white;
-    transition: transform 0.2s;
+.leaderboard-table th {
+    text-align: left;
+    padding: 12px 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    font-weight: 600;
 }
 
-.leaderboard-row:hover {
-    transform: scale(1.01);
+.leaderboard-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
 }
 
-/* Form Dots (W/L/N) */
-.form-dot {
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center; justify-content: center;
-    font-size: 10px; font-weight: 900; color: white;
-    margin-right: 4px;
+.pts-number {
+    font-weight: 700;
+    color: #ffb347;
+    text-align: right;
+    font-size: 1.1rem;
 }
-.dot-win { background-color: var(--tiranga-green); }
-.dot-loss { background-color: #ef4444; }
-.dot-none { background-color: #94a3b8; }
+
+.rank-1 { color: #ffd700; font-weight: 800; }
+.rank-2 { color: #c0c0c0; font-weight: 700; }
+.rank-3 { color: #cd7f32; font-weight: 700; }
+
+/* Match Cards */
+.match-date, .match-venue {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.prediction-badge {
+    background: rgba(76, 175, 80, 0.2);
+    border: 1px solid rgba(76, 175, 80, 0.5);
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #81c784;
+}
+
+.completed-badge {
+    background: rgba(255, 193, 7, 0.2);
+    border: 1px solid rgba(255, 193, 7, 0.5);
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #ffd966;
+}
+
+.winner-badge {
+    background: rgba(255, 107, 53, 0.2);
+    border: 1px solid #ff6b35;
+    border-radius: 20px;
+    padding: 10px;
+    text-align: center;
+    margin-top: 12px;
+    font-weight: 700;
+    color: #ff8c42;
+}
+
+/* User Header */
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+}
+
+.welcome-text {
+    font-weight: 600;
+    color: #ffb347;
+}
+
+.logout-btn {
+    width: auto;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: none;
+}
+
+/* Admin Section */
+.admin-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+.loader {
+    text-align: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.demo-note, .points-info {
+    font-size: 0.7rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 15px;
+}
+
+.status-open {
+    background: #4caf50;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 550px) {
+    body {
+        padding: 15px;
+    }
+    .card {
+        padding: 16px;
+    }
+    .vote-btns {
+        gap: 8px;
+    }
+    button {
+        padding: 12px;
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Background Slideshow Logic */
+.background-slideshow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    overflow: hidden;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center center;
+    opacity: 0;
+    animation: slideAnimation 18s infinite;
+}
+
+/* Cycle through 3 images */
+.slide:nth-child(1) { animation-delay: 0s; }
+.slide:nth-child(2) { animation-delay: 6s; }
+.slide:nth-child(3) { animation-delay: 12s; }
+
+@keyframes slideAnimation {
+    0% { opacity: 0; transform: scale(1); }
+    10% { opacity: 0.4; } /* Lower opacity so it's not distracting */
+    33% { opacity: 0.4; }
+    43% { opacity: 0; transform: scale(1.1); }
+    100% { opacity: 0; }
+}
+
+/* Enhance the Glassmorphism for readability */
+.glass-card {
+    background: rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Ensure text is readable over images */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(20,20,20,0.4) 100%);
+    z-index: -1;
+}
+
+h1, h3, .welcome-text, .section-title {
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.subtitle, .demo-note {
+    color: #e0e0e0;
+}

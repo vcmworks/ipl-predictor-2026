@@ -1,144 +1,312 @@
-const API = "https://script.google.com/macros/s/AKfycbzgRFE0Vy6i8Afj-nAyf6MUgx9-Eeuxy4PvhmEfAaE0EFdA9nN3JVEywj6eKNBo-BcVXQ/exec"; 
+// ==================== CONFIGURATION ====================
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyfH9j4Px9U87gen3nIHQcPZ24maS-HEIGa3NVu58bAaadnGgmnfBeTgHaIJaXCKn4b/exec";
 
-// 1. SESSION CHECK & INITIAL LOAD
-window.onload = () => {
-    const session = JSON.parse(localStorage.getItem('ipl_session'));
-    if (session) {
-        // Exclude Admin from Prediction View
-        if (session.username.toLowerCase() === "admin") {
-            document.body.innerHTML = `
-                <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#FFD700; font-family:sans-serif;">
-                    <div class="glass" style="padding:40px; text-align:center; background:white; border-radius:20px; box-shadow:0 10px 20px rgba(0,0,0,0.1);">
-                        <h2 style="color:#000080;">Admin Access</h2>
-                        <p>Please use the Google Sheet to update match winners.</p>
-                        <button onclick="logout()" style="margin-top:20px; padding:10px 20px; background:#ef4444; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">Logout</button>
-                    </div>
-                </div>`;
-            return;
-        }
-        // Hide login and show dashboard
-        const overlay = document.getElementById('loginOverlay');
-        if (overlay) overlay.classList.add('hidden');
-        loadDashboard();
-    }
-};
+let user = null;
+let autoRefresh = null;
 
-// 2. LOGIN LOGIC
-async function handleLogin() {
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value.trim();
-    const btn = document.getElementById('loginBtn');
-    
-    btn.innerText = "VERIFYING...";
-
+// ==================== API CALLS ====================
+async function callAPI(params) {
     try {
-        // Construct the URL with query parameters
-        const url = `${API}?action=login&u=${encodeURIComponent(u)}&p=${encodeURIComponent(p)}`;
+        const url = new URL(SCRIPT_URL);
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        url.searchParams.append('t', Date.now());
         
-        const res = await fetch(url);
-        const data = await res.json();
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error("API Error:", error);
+        throw error;
+    }
+}
 
-        if (data.status === "SUCCESS") {
-            localStorage.setItem('ipl_session', JSON.stringify(data));
-            location.reload(); 
+// ==================== DATE FORMATTING ====================
+function formatDate(dateStr, timeStr) {
+    if (!dateStr) return "Date TBA";
+    try {
+        let dateVal = dateStr;
+        if (typeof dateStr === 'string' && dateStr.includes('T')) {
+            const d = new Date(dateStr);
+            dateVal = `${d.getDate().toString().padStart(2, '0')}-${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]}-${d.getFullYear().toString().slice(-2)}`;
+        }
+        const parts = dateVal.split('-');
+        const day = parts[0];
+        const monthMap = { 'Jan': 'Jan', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Apr', 'May': 'May', 'Jun': 'Jun',
+                          'Jul': 'Jul', 'Aug': 'Aug', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Dec' };
+        const month = monthMap[parts[1]] || parts[1];
+        let year = parts[2];
+        if (year && year.length === 2) year = '20' + year;
+        return `${day} ${month} ${year} · ${timeStr || 'TBD'}`;
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+// ==================== LOGIN ====================
+async function handleLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.querySelector('#login-screen button');
+    const originalText = btn.innerHTML;
+    
+    if (!username || !password) {
+        alert("Please enter username and password");
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Loading...';
+    
+    try {
+        const data = await callAPI({ action: 'login', username, password });
+        
+        if (data.success) {
+            user = { username, name: data.name };
+            document.getElementById('display-name').innerText = user.name;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Show admin buttons if admin
+            if (username === 'admin') {
+                const adminButtons = document.getElementById('admin-buttons');
+                if (adminButtons) adminButtons.style.display = 'block';
+            }
+            
+            await loadData();
+            if (autoRefresh) clearInterval(autoRefresh);
+            autoRefresh = setInterval(loadData, 30000);
         } else {
-            alert("❌ Login Failed: Check Username or Password.");
-            btn.innerText = "Start Predicting";
+            alert("Login failed: " + data.error);
         }
-    } catch (e) {
-        alert("📡 Connection Error: Ensure your Apps Script is deployed as 'Anyone'.");
-        btn.innerText = "Start Predicting";
+    } catch (err) {
+        alert("Connection error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
-// 3. LOAD DASHBOARD (Only shows future/open matches)
-async function loadDashboard() {
-    const session = JSON.parse(localStorage.getItem('ipl_session'));
-    const grid = document.getElementById('matchGrid');
-    if (!grid) return;
-
+// ==================== LOAD DATA ====================
+async function loadData() {
+    if (!user) return;
+    
     try {
-        const res = await fetch(`${API}?action=getDashboard&user=${session.username}`);
-        const data = await res.json();
-
-        if (!data.matches || data.matches.length === 0) {
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-20">
-                    <p style="font-weight:900; color:#000080; opacity:0.5; text-transform:uppercase; letter-spacing:2px;">
-                        No matches currently open for prediction
-                    </p>
-                </div>`;
-            return;
-        }
-
-        grid.innerHTML = data.matches.map(m => {
-            const userVote = data.userPreds.find(v => v[2] == m[0]);
-            const currentPick = userVote ? userVote[3] : null;
-
+        const data = await callAPI({ action: 'getData' });
+        
+        // Update leaderboard
+        const users = data.users || [];
+        users.sort((a, b) => (b.Points || 0) - (a.Points || 0));
+        const tbody = document.querySelector('#lb-table tbody');
+        tbody.innerHTML = users.map((u, i) => {
+            const rank = i + 1;
+            let medal = '';
+            if (rank === 1) medal = '🥇 ';
+            else if (rank === 2) medal = '🥈 ';
+            else if (rank === 3) medal = '🥉 ';
+            let rankClass = '';
+            if (rank === 1) rankClass = 'rank-1';
+            else if (rank === 2) rankClass = 'rank-2';
+            else if (rank === 3) rankClass = 'rank-3';
             return `
-                <div class="match-card glass p-6 animate-fade-in shadow-sm">
-                    <div class="flex justify-between text-[10px] font-black mb-4 uppercase text-slate-400">
-                        <span>${m[1]} | ${m[2]} IST</span>
-                        <span style="color:#128807;">● Open</span>
-                    </div>
-                    <div class="flex gap-3 mb-4">
-                        <button onclick="handleToggle(this, ${m[0]}, '${m[3]}', '${currentPick}')" 
-                            class="team-btn ${currentPick === m[3] ? 'selected' : ''}">
-                            ${m[3]}
-                        </button>
-                        <button onclick="handleToggle(this, ${m[0]}, '${m[4]}', '${currentPick}')" 
-                            class="team-btn ${currentPick === m[4] ? 'selected' : ''}">
-                            ${m[4]}
-                        </button>
-                    </div>
-                    <div class="text-[9px] text-slate-400 font-bold uppercase italic text-center">Match #${m[0]}</div>
-                </div>`;
+                <tr class="${rankClass}">
+                    <td>${medal}${rank}</td>
+                    <td><strong>${escapeHtml(u.Name)}</strong></td>
+                    <td class="pts-number">${u.Points || 0}</td>
+                </tr>
+            `;
         }).join('');
-    } catch (e) {
-        console.error("Dashboard Load Error:", e);
-        grid.innerHTML = `<p class="text-center text-red-500">Failed to load matches.</p>`;
-    }
-}
-
-// 4. PREDICTION TOGGLE LOGIC
-async function handleToggle(btn, matchId, clickedTeam, currentPick) {
-    const session = JSON.parse(localStorage.getItem('ipl_session'));
-    
-    // Logic: If clicking the team you already picked, it "unselects" (sets to empty)
-    const newPick = (clickedTeam === currentPick) ? "" : clickedTeam;
-
-    // UI REACTION (Immediate)
-    const buttons = btn.parentElement.querySelectorAll('.team-btn');
-    buttons.forEach(b => b.classList.remove('selected'));
-    
-    if (newPick !== "") {
-        btn.classList.add('selected');
-    }
-
-    try {
-        // Send to Apps Script
-        await fetch(API, {
-            method: 'POST',
-            mode: 'no-cors', // Essential for Apps Script POST
-            body: JSON.stringify({
-                action: "vote",
-                user: session.username,
-                matchId: matchId,
-                team: newPick
-            })
+        
+        // Get matches
+        const matches = data.matches || [];
+        const predictions = data.predictions || [];
+        
+        // Available matches (VoteOpen = YES, no winner)
+        const availableMatches = matches.filter(match => {
+            return match.VoteOpen === true && (!match.Winner || match.Winner === '');
         });
-
-        // Refresh slightly later to sync the 'currentPick' variable for the next click
-        setTimeout(loadDashboard, 1000); 
-    } catch (e) {
-        console.error("Voting Error:", e);
-        alert("Action failed. Check your internet connection.");
-        loadDashboard(); // Reset UI
+        
+        // Completed matches (has winner)
+        const completedMatches = matches.filter(match => {
+            return match.Winner && match.Winner !== '';
+        });
+        
+        // Render available matches
+        const matchesContainer = document.getElementById('matches-container');
+        if (availableMatches.length === 0) {
+            matchesContainer.innerHTML = `
+                <div class="card" style="text-align: center;">
+                    <p>🏏 No matches available for voting right now.</p>
+                    <p style="font-size: 0.85rem; margin-top: 10px;">Admin will open matches by setting Vote = YES in Google Sheets</p>
+                </div>
+            `;
+        } else {
+            matchesContainer.innerHTML = availableMatches.map(match => {
+                const userPred = predictions.find(p => p.Username === user.username && String(p.MatchID) === String(match.ID));
+                const formattedDate = formatDate(match.Date, match.Time);
+                
+                if (userPred) {
+                    return `
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong style="font-size: 1.1rem;">${escapeHtml(match.Team1)} 🆚 ${escapeHtml(match.Team2)}</strong>
+                                <span class="status-open">OPEN</span>
+                            </div>
+                            <div class="match-date">📅 ${escapeHtml(formattedDate)}</div>
+                            <div class="match-venue">🏟️ ${escapeHtml(match.Venue)}</div>
+                            <div class="prediction-badge">
+                                🎯 Your prediction: <strong>${escapeHtml(userPred.Prediction)}</strong>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 1.1rem;">${escapeHtml(match.Team1)} vs ${escapeHtml(match.Team2)}</strong>
+                            <span class="status-open">OPEN</span>
+                        </div>
+                        <div class="match-date">📅 ${escapeHtml(formattedDate)}</div>
+                        <div class="match-venue">🏟️ ${escapeHtml(match.Venue)}</div>
+                        <div class="vote-btns">
+                            <button class="vote-btn" data-id="${match.ID}" data-team="${escapeHtml(match.Team1)}">🏏 ${escapeHtml(match.Team1)}</button>
+                            <button class="vote-btn" data-id="${match.ID}" data-team="${escapeHtml(match.Team2)}">⚡ ${escapeHtml(match.Team2)}</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Render completed matches
+        const completedContainer = document.getElementById('completed-container');
+        if (completedMatches.length === 0) {
+            completedContainer.innerHTML = `
+                <div class="card" style="text-align: center;">
+                    <p>🏆 No completed matches yet.</p>
+                </div>
+            `;
+        } else {
+            completedContainer.innerHTML = completedMatches.map(match => {
+                const userPred = predictions.find(p => p.Username === user.username && String(p.MatchID) === String(match.ID));
+                const formattedDate = formatDate(match.Date, match.Time);
+                
+                let predictionHtml = '';
+                if (userPred) {
+                    const isCorrect = userPred.Prediction === match.Winner;
+                    predictionHtml = `
+                        <div class="${isCorrect ? 'prediction-badge' : 'completed-badge'}" style="${isCorrect ? '' : 'background: rgba(231, 76, 60, 0.2); border-color: #e74c3c; color: #e74c3c;'}">
+                            🎯 You predicted: ${escapeHtml(userPred.Prediction)} ${isCorrect ? '✓ Correct! (+10 points)' : '✗ Wrong (0 points)'}
+                        </div>
+                    `;
+                } else {
+                    predictionHtml = `<div class="completed-badge">📝 You did not vote for this match (+5 points awarded)</div>`;
+                }
+                
+                return `
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 1.1rem;">${escapeHtml(match.Team1)} vs ${escapeHtml(match.Team2)}</strong>
+                            <span class="status-open" style="background: #ffd966; color: #8b5a2b;">COMPLETED</span>
+                        </div>
+                        <div class="match-date">📅 ${escapeHtml(formattedDate)}</div>
+                        <div class="match-venue">🏟️ ${escapeHtml(match.Venue)}</div>
+                        <div class="winner-badge">
+                            🏆 Winner: <strong>${escapeHtml(match.Winner)}</strong>
+                        </div>
+                        ${predictionHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Attach vote handlers
+        document.querySelectorAll('.vote-btn').forEach(btn => {
+            btn.onclick = () => handleVote(btn.dataset.id, btn.dataset.team, btn);
+        });
+        
+    } catch (error) {
+        console.error("Load data error:", error);
+        document.getElementById('matches-container').innerHTML = '<div class="card">Error loading data</div>';
     }
 }
 
-// 5. LOGOUT
-function logout() {
-    localStorage.clear();
-    location.reload();
+// ==================== VOTE ====================
+async function handleVote(matchId, team, button) {
+    if (!confirm(`Predict "${team}" to win?`)) return;
+    
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '⏳ Saving...';
+    
+    try {
+        const result = await callAPI({
+            action: 'vote',
+            username: user.username,
+            matchId: matchId,
+            prediction: team
+        });
+        
+        if (result.success) {
+            alert(`✅ Prediction saved! You picked ${team}.`);
+            await loadData();
+        } else {
+            alert(result.message || "Could not save prediction");
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    } catch (err) {
+        alert("Error: " + err.message);
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
 }
+
+// ==================== ADMIN FUNCTIONS ====================
+async function recalculateAllPoints() {
+    if (!confirm("This will recalculate ALL points based on all winners. Continue?")) return;
+    
+    try {
+        const result = await callAPI({ action: 'recalculate' });
+        if (result.success) {
+            alert(`✅ ${result.message}`);
+            await loadData();
+        } else {
+            alert("Error: " + result.message);
+        }
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}
+
+async function resetAllPoints() {
+    if (!confirm("⚠️ This will reset ALL points to ZERO for all users. Are you sure?")) return;
+    
+    try {
+        const result = await callAPI({ action: 'resetPoints' });
+        if (result.success) {
+            alert(`✅ ${result.message}`);
+            await loadData();
+        } else {
+            alert("Error: " + result.message);
+        }
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}
+
+// ==================== INIT ====================
+window.handleLogin = handleLogin;
+window.recalculateAllPoints = recalculateAllPoints;
+window.resetAllPoints = resetAllPoints;
+
+console.log("IPL 2026 Predictor Ready");
